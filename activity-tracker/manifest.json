@@ -1,19 +1,24 @@
 {
   "manifest_version": 3,
-  "name": "Activity Tracker API Module",
-  "version": "1.0",
-  "description": "Context-aware notification manager activity tracker module",
-  "permissions": [
-    "tabs",
-    "storage",
-    "idle",
-    "alarms"
-  ],
-  "host_permissions": [
-    "*://*/*"
-  ],
+  "name": "Context Notif Manager",
+  "version": "1.0.0",
   "background": {
     "service_worker": "background.js",
     "type": "module"
-  }
+  },
+  "permissions": [
+    "tabs",
+    "idle",
+    "storage",
+    "alarms",
+    "offscreen"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["overlayUI.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }
