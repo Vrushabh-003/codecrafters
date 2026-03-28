@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Activity Tracker API Module",
+  "version": "1.0",
+  "description": "Context-aware notification manager activity tracker module",
+  "permissions": [
+    "tabs",
+    "storage",
+    "idle",
+    "alarms"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}
