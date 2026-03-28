@@ -41,9 +41,18 @@ export class StorageLayer {
   }
 
   async saveNotificationDecision({ notification, decision, queueDepth }) {
+    const safeNotification = this.#sanitizeNotification(notification);
+
     const payload = {
-      notification,
-      decision,
+      notification: safeNotification,
+      decision: {
+        action: decision?.action ?? 'DELAY',
+        priority: decision?.priority ?? 'MEDIUM',
+        contextState: decision?.contextState ?? 'transitioning',
+        reason: decision?.reason ?? '',
+        queueDepth: decision?.queueDepth ?? queueDepth ?? null,
+        decidedAt: decision?.decidedAt ?? Date.now(),
+      },
       queueDepth,
       savedAt: Date.now(),
     };
@@ -54,9 +63,20 @@ export class StorageLayer {
   }
 
   async saveDigest(items) {
+    const safeItems = (Array.isArray(items) ? items : []).map((item) => ({
+      priority: item?.priority ?? 'MEDIUM',
+      action: item?.action ?? 'DELAY',
+      queuedAt: item?.queuedAt ?? Date.now(),
+      delayedMs: item?.delayedMs ?? 0,
+      contextStateAtQueue: item?.contextStateAtQueue ?? 'transitioning',
+      queuedDomain: item?.queuedDomain ?? null,
+      explain: item?.explain ?? null,
+      notification: this.#sanitizeNotification(item?.notification),
+    }));
+
     const payload = {
-      items,
-      count: Array.isArray(items) ? items.length : 0,
+      items: safeItems,
+      count: safeItems.length,
       savedAt: Date.now(),
     };
 
@@ -83,5 +103,18 @@ export class StorageLayer {
     } catch (error) {
       console.warn('[StorageLayer] session write failed', error);
     }
+  }
+
+  #sanitizeNotification(notification) {
+    if (!notification || typeof notification !== 'object') return null;
+
+    return {
+      id: notification.id ?? null,
+      source: notification.source ?? 'unknown',
+      priority: notification.priority ?? null,
+      createdAt: notification.createdAt ?? Date.now(),
+      hasBody: Boolean(notification.body),
+      hasTitle: Boolean(notification.title),
+    };
   }
 }
