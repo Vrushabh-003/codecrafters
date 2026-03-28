@@ -1,0 +1,16 @@
+{
+  "name": "activity-tracker",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "bridge:mock": "node src/bridge/bridgeServer.js",
+    "bridge:windows": "node src/bridge/bridgeServer.js --windows"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
