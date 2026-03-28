@@ -3,7 +3,7 @@
   "name": "Context Notif Manager",
   "version": "1.0.0",
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "src/extension/background.js",
     "type": "module"
   },
   "permissions": [
@@ -11,13 +11,19 @@
     "idle",
     "storage",
     "alarms",
-    "offscreen"
+    "offscreen",
+    "notifications"
   ],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["overlayUI.js"],
+      "js": ["src/extension/content/telemetryContent.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/extension/content/overlayUI.js"],
       "run_at": "document_idle"
     }
   ]
