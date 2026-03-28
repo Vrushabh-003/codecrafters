@@ -7,6 +7,12 @@ export class NotificationManager {
   /** @type {(notification: IncomingNotification) => Decision | null} */
   #decisionHandler = null;
 
+  /** @type {(payload: { notification: IncomingNotification, decision: Decision, queueDepth: number|null }) => void | Promise<void>} */
+  #decisionListener = null;
+
+  /** @type {(items: QueuedNotification[]) => void | Promise<void>} */
+  #digestListener = null;
+
   /** @type {boolean} */
   #isInitialized = false;
 
@@ -20,8 +26,20 @@ export class NotificationManager {
     this.#decisionHandler = typeof handler === 'function' ? handler : null;
   }
 
+  setDecisionListener(listener) {
+    this.#decisionListener = typeof listener === 'function' ? listener : null;
+  }
+
+  setDigestListener(listener) {
+    this.#digestListener = typeof listener === 'function' ? listener : null;
+  }
+
   async flushDigest(items) {
     if (!Array.isArray(items) || items.length === 0) return;
+
+    if (this.#digestListener) {
+      await this.#digestListener(items);
+    }
 
     await this.#broadcastToOverlay({
       source: 'notificationManager',
@@ -58,6 +76,14 @@ export class NotificationManager {
       decision,
       queueDepth: null,
     });
+
+    if (this.#decisionListener) {
+      await this.#decisionListener({
+        notification,
+        decision,
+        queueDepth: null,
+      });
+    }
 
     return decision;
   }

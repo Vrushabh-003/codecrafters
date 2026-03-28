@@ -3,11 +3,13 @@ import { FeatureExtractor } from './featureExtractor.js';
 import { ContextEngine    } from './contextEngine.js';
 import { DecisionEngine   } from './decisionEngine.js';
 import { NotificationManager } from './notificationManager.js';
+import { StorageLayer } from './storageLayer.js';
 
 const extractor = new FeatureExtractor();
 const context = new ContextEngine();
 const decisions = new DecisionEngine();
 const notificationManager = new NotificationManager();
+const storage = new StorageLayer();
 let tracker = null;
 let latestContextState = {
   state: 'transitioning',
@@ -33,7 +35,14 @@ async function safeSendMessage(message) {
 async function bootstrap() {
   if (tracker) return;
 
+  await storage.init();
   notificationManager.init();
+  notificationManager.setDecisionListener((payload) => {
+    return storage.saveNotificationDecision(payload);
+  });
+  notificationManager.setDigestListener((items) => {
+    return storage.saveDigest(items);
+  });
 
   tracker = new ActivityTracker((payload) => {
     extractor.ingest(payload.event);
@@ -76,6 +85,12 @@ async function bootstrap() {
       contextState,
       queueDepth: decisions.getQueueDepth(),
     });
+
+    storage.savePipelineSnapshot({
+      vector,
+      contextState,
+      queueDepth: decisions.getQueueDepth(),
+    });
   });
 
   await tracker.init();
@@ -91,8 +106,14 @@ async function bootstrap() {
     console.log('[NotificationManager] Test decision ->', decision.action, decision);
     return decision;
   };
+  globalThis.__storageSnapshot = () => {
+    const snapshot = storage.getSnapshot();
+    console.log('[StorageLayer] Snapshot ->', snapshot);
+    return snapshot;
+  };
   console.log('[SW] Bootstrap complete at', new Date().toISOString());
   console.log('[SW] Test helper ready: __testNotification({...})');
+  console.log('[SW] Storage helper ready: __storageSnapshot()');
 }
 
 chrome.runtime.onInstalled.addListener(() => {
